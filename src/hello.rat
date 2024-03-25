@@ -1,0 +1,14 @@
+// Simple rattle program
+
+fn hello(name) {
+  print("Hello " + name);
+  return name;
+}
+
+fn hey(name) {
+  print("Hey " + name);
+  return hello(name);
+}
+
+let name = hey("Simon Nganga");
+print("My name is " + name);
