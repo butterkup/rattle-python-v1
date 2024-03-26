@@ -1,5 +1,4 @@
-import enum
-import typing
+import enum, typing
 
 
 class Tktype(enum.StrEnum):
@@ -14,6 +13,7 @@ class Tktype(enum.StrEnum):
     IDENTIFIER = enum.auto()
 
     DOT = enum.auto()
+    COMMA = enum.auto()
     GREATER = enum.auto()
     GREATER_THAN = enum.auto()
     LESS = enum.auto()
@@ -47,8 +47,10 @@ class Tktype(enum.StrEnum):
     RETURN = enum.auto()
     CONTINUE = enum.auto()
     BREAK = enum.auto()
-    CLASS = enum.auto()
-    THIS = enum.auto()
+    # CLASS = enum.auto()
+    # THIS = enum.auto()
+    THROW = enum.auto()
+    CATCH = enum.auto()
 
 
 class Location(typing.NamedTuple):
@@ -83,6 +85,8 @@ keywords: typing.Final[dict[str, Tktype]] = {
     "nil": Tktype.NIL,
     "break": Tktype.BREAK,
     "continue": Tktype.CONTINUE,
-    "class": Tktype.CLASS,
-    "this": Tktype.THIS,
+    "throw": Tktype.THROW,
+    "catch": Tktype.CATCH,
+    # "class": Tktype.CLASS,
+    # "this": Tktype.THIS,
 }

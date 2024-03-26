@@ -119,15 +119,25 @@ class _Lexer_impl:
         self.advance()  # Consume closing quote
         return self.make_token(Tk.STRING)
 
-    def number(self) -> tk.Token:
+    def _number(self) -> str:
+        digits = ''
         while not self.empty() and self.peek().isdigit():
+            digits += self.advance()
+        return digits
+
+    def number(self) -> tk.Token:
+        self._number()
+        if self.peek() == '.':
             self.advance()
+            if not (after := self._number()):
+                err = 'Expected a number after the dot in %r' % after
+                return self.make_token(Tk.ERROR, error=err)
         return self.make_token(Tk.NUMBER)
 
     def spaces(self):
         while not self.empty():
             match self.peek():
-                case " " | "\t" | "\f" | "\v" | "\n":
+                case " " | "\t" | "\n":
                     self.advance()
                 case _:
                     break
@@ -189,6 +199,8 @@ class _Lexer_impl:
                                 yield e
                         case _:
                             yield self.make_token(Tk.SLASH)
+                case ',':
+                    yield self.make_ctoken(Tk.COMMA)
                 case "+":
                     yield self.make_ctoken(Tk.PLUS)
                 case "-":

@@ -19,3 +19,9 @@ The most exciting part of this is optimization, unfortunately we'll not be using
 Most content in this project is self researched and may not be the best in practice.
 
 Some resources are worth mentioning though; the book `Compiler principles, techniques and tools` by `Alfre Aho` and `Crafting Interpreters` by `Robert Nystrom` are amazing reads on this topic.
+
+## RoadMap
+
+First, we lex a string to produce tokens and report any invalid characters found, then we parse the token stream to an abstract syntax tree `AST` which we will use to do some partial optimizations like constant folding in the expression tree, we can also expand loops if we know how many iterations it will run, and also semantic analysis; check if `break`, `continue` and `return` have been used in their expected scopes and also resolve variables. After this we compile the AST as we did in [YAP project](http://github.com/thee-dushbag/yap.git) exprlang. All optimizations in the AST will be done using visitors; ie `ExpressionVisitor` and `StatementVisitor`.
+
+This is not the best way but a good place to start. Further optimizations will be enforced in bytecode.
