@@ -48,7 +48,11 @@ class If(Statement):
 
 class For(Loop):
     def __init__(
-        self, init: Expression, cond: Expression, incr: Expression, body: Statement
+        self,
+        init: Expression | None,
+        cond: Expression | None,
+        incr: Expression | None,
+        body: Statement,
     ) -> None:
         self.initializer = init
         self.condition = cond
@@ -74,9 +78,9 @@ class Continue(Statement): ...
 
 
 class Let(Statement):
-    def __init__(self, name: Token, expr: Expression) -> None:
-        self.name = name
-        self.expression = expr
+    def __init__(self, let: Token, expr: dict[str, Expression | None]) -> None:
+        self.let = let
+        self.defined = expr
 
 
 class Block(Statement):

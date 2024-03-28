@@ -197,16 +197,23 @@ class _Lexer_impl:
                         case "*":
                             if (e := self.mcomment()) is not None:
                                 yield e
+                        case "=":
+                            yield self.make_ctoken(Tk.SLASH_EQUAL)
                         case _:
                             yield self.make_token(Tk.SLASH)
+                case '.':
+                    yield self.make_ctoken(Tk.DOT)
                 case ',':
                     yield self.make_ctoken(Tk.COMMA)
                 case "+":
-                    yield self.make_ctoken(Tk.PLUS)
+                    self.advance()
+                    yield self.make_token(Tk.PLUS_EQUAL if self.match('=') else Tk.PLUS)
                 case "-":
-                    yield self.make_ctoken(Tk.MINUS)
+                    self.advance()
+                    yield self.make_token(Tk.MINUS_EQUAL if self.match('=') else Tk.MINUS)
                 case "*":
-                    yield self.make_ctoken(Tk.STAR)
+                    self.advance()
+                    yield self.make_token(Tk.STAR_EQUAL if self.match('=') else Tk.STAR)
                 case ";":
                     yield self.make_ctoken(Tk.SEMICOLON)
                 case "{":

@@ -5,9 +5,10 @@ algorithms related.
 """
 
 from ..token import Tktype as Tk
-from ..nodes import expr as e
+from ..nodes import expr as E
 from .prec import P
 import typing as ty
+from . import error
 from .rules import (
     Rule,
     Info,
@@ -29,13 +30,13 @@ else:
     Stream = type
 
 
-def expression(stream: Stream) -> e.Expression:
+def expression(stream: Stream) -> E.Expression:
     "Build info object and start parsing"
     info = Info(stream, expression_parser)
     return expression_parser(info)
 
 
-def expression_parser(info: Info, prec: P | None = None) -> e.Expression:
+def expression_parser(info: Info, prec: P | None = None) -> E.Expression:
     "Kick off expression parsing from the lowest level."
     return pratts_expr_parser(info, prec or P.LOWEST_PRECEDENCE)
 
@@ -45,6 +46,12 @@ NoRule: ty.Final[Rule] = Rule(P.NONE, P.NONE)
 _primary_rule = Rule(P.PRIMARY, P.NONE, primary_expr)
 # Mapping of token type and parse rule
 OpRules: ty.Final[dict[Tk, Rule]] = {
+    Tk.EQUAL: Rule(P.NONE, P.ASSIGNMENT, None, binary_expr, A.RIGHT),
+    Tk.PLUS_EQUAL: Rule(P.NONE, P.OP_ASSIGNMENT, None, binary_expr, A.RIGHT),
+    Tk.STAR_EQUAL: Rule(P.NONE, P.OP_ASSIGNMENT, None, binary_expr, A.RIGHT),
+    Tk.SLASH_EQUAL: Rule(P.NONE, P.OP_ASSIGNMENT, None, binary_expr, A.RIGHT),
+    Tk.MINUS_EQUAL: Rule(P.NONE, P.OP_ASSIGNMENT, None, binary_expr, A.RIGHT),
+    #
     Tk.NUMBER: _primary_rule,
     Tk.STRING: _primary_rule,
     Tk.NIL: _primary_rule,
@@ -58,12 +65,12 @@ OpRules: ty.Final[dict[Tk, Rule]] = {
     Tk.STAR: Rule(P.NONE, P.MULTIPLY, None, binary_expr, A.LEFT),
     Tk.SLASH: Rule(P.NONE, P.DIVIDE, None, binary_expr, A.RIGHT),
     #
-    Tk.OPEN_PAREN: Rule(P.LOWEST_PRECEDENCE, P.CALL, group_expr, call_expr),
+    Tk.OPEN_PAREN: Rule(P.GROUP, P.CALL, group_expr, call_expr),
     Tk.DOT: Rule(P.NONE, P.DOT, None, dot_expr),
     #
-    Tk.EQUAL: Rule(P.NONE, P.ASSIGNMENT, None, binary_expr, A.RIGHT),
     Tk.EQUAL_EQUAL: Rule(P.NONE, P.COMPARISSON, None, binary_expr),
     Tk.BANG_EQUAL: Rule(P.NONE, P.COMPARISSON, None, binary_expr),
+    #
     Tk.GREATER: Rule(P.NONE, P.RELATIONAL, None, binary_expr),
     Tk.GREATER_THAN: Rule(P.NONE, P.RELATIONAL, None, binary_expr),
     Tk.LESS: Rule(P.NONE, P.RELATIONAL, None, binary_expr),
@@ -74,16 +81,16 @@ OpRules: ty.Final[dict[Tk, Rule]] = {
 }
 
 
-def pratts_expr_parser(info: Info, prec: P) -> e.Expression:
+def pratts_expr_parser(info: Info, prec: P) -> E.Expression:
     "Pratts parsing algorithm"
     tk = info.stream.peek()
     if tk is None:
-        raise
+        raise error.UnexpectedEndOfProgram(tk)
     rule = OpRules.get(tk.type, NoRule)
     if rule.prefix is None:
-        raise
+        raise error.MissingExpression(tk)
     if prec > rule.pre_prec:
-        raise
+        raise error.MissingExpression(tk)
     left = rule.prefix(info, rule.pre_prec)
     while True:
         tk = info.stream.peek()

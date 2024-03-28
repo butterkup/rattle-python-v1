@@ -3,7 +3,7 @@ from ..token import Tktype as Tk
 import typing as ty, enum as _
 from ..nodes import expr as e
 from .prec import Precedence
-from . import error as err
+from . import error
 
 if ty.TYPE_CHECKING:
     from ..lexer import Stream
@@ -64,21 +64,21 @@ def primary_expr(info: Info, _: Precedence) -> e.PrimaryExpr:
             Klass = e.BoolFalse
         case Tk.IDENTIFIER:
             Klass = e.Variable
-        case u:
-            raise err.UnknownPrimary(u)
+        case _:
+            raise error.UnknownPrimary(tk)
     return Klass(tk)
 
 
-def group_expr(info: Info, prec: Precedence) -> e.Expression:
-    # Own the open paren
+def group_expr(info: Info, prec: Precedence) -> e.Group:
+    tk = info.stream.peek()
     info.stream.pop()
-    expr = info.parser(info, prec)
+    expr = info.parser(info, None)
     tk = info.stream.peek()
     if tk.type != Tk.CLOSE_PAREN:
-        raise
+        raise error.UnclosedGroupExpr(tk, ")")
     # Own the close paren
     info.stream.pop()
-    return expr
+    return e.Group(tk, expr)
 
 
 def unary_expr(info: Info, prec: Precedence) -> e.UnaryExpr:
@@ -93,8 +93,8 @@ def unary_expr(info: Info, prec: Precedence) -> e.UnaryExpr:
             Klass = e.UnaryMinus
         case Tk.BANG:
             Klass = e.Not
-        case u:
-            raise err.UnknownUnaryOperator(u)
+        case _:
+            raise error.UnknownUnaryOperator(tk)
     return Klass(tk, operand)
 
 
@@ -112,7 +112,6 @@ def binary_expr(
 ) -> e.BinaryExpr:
     tk = info.stream.peek()
     info.stream.pop()
-
     prec = associate(prec, assoc)
     right = info.parser(info, prec)
     Klass: type[e.BinaryExpr]
@@ -144,8 +143,20 @@ def binary_expr(
             Klass = e.And
         case Tk.OR:
             Klass = e.Or
-        case u:
-            raise err.UnknownBinaryOperator(u)
+        case Tk.PLUS_EQUAL:
+            right = e.Plus(tk, left, right)
+            Klass = e.Assign
+        case Tk.MINUS_EQUAL:
+            right = e.Minus(tk, left, right)
+            Klass = e.Assign
+        case Tk.STAR_EQUAL:
+            right = e.Multiply(tk, left, right)
+            Klass = e.Assign
+        case Tk.SLASH_EQUAL:
+            right = e.Divide(tk, left, right)
+            Klass = e.Assign
+        case _:
+            raise error.UnknownBinaryOperator(tk)
     return Klass(tk, left, right)
 
 
@@ -159,14 +170,14 @@ def call_expr(
         args.append(info.parser(info, None))
         cc = info.stream.pop()
         if cc is None:
-            raise
+            raise error.UnexpectedEndOfProgram(tk)
         match cc.type:
             case Tk.COMMA:
                 continue
             case Tk.CLOSE_PAREN:
                 break
             case _:
-                raise
+                raise error.ExpectedToken(cc, ",", ")")
     return e.Call(tk, left, args)
 
 
@@ -175,9 +186,8 @@ def dot_expr(
 ) -> e.Dot:
     tk = info.stream.peek()
     info.stream.pop()
-    attr = info.stream.pop()
-    if attr is None:
-        raise
-    if attr.type != Tk.IDENTIFIER:
-        raise
-    return e.Dot(tk, left, e.Member(attr))
+    member = info.stream.pop()
+    if member is None or member.type != Tk.IDENTIFIER:
+        raise error.ExpectedToken(member, "IDENTIFIER")
+    member = e.Member(member)
+    return e.Dot(tk, left, member)

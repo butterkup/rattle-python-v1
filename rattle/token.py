@@ -27,6 +27,11 @@ class Tktype(enum.StrEnum):
     STAR = enum.auto()
     SLASH = enum.auto()
 
+    PLUS_EQUAL = enum.auto()
+    MINUS_EQUAL = enum.auto()
+    STAR_EQUAL = enum.auto()
+    SLASH_EQUAL = enum.auto()
+
     AND = enum.auto()
     OR = enum.auto()
     VERTBAR = enum.auto()

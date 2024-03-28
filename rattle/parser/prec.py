@@ -11,11 +11,13 @@ class Precedence(_.IntEnum):
     NONE = _.auto()
 
     # Sentinel that marks the lowest precedence
-    # Also used to parse the group expression: (expr)
     LOWEST_PRECEDENCE = _.auto()
 
     # Assignment has the lowest precedence: =
     ASSIGNMENT = _.auto()
+
+    # OpAssignment operators: += /= -= *=
+    OP_ASSIGNMENT = _.auto()
 
     # Or operator: ||
     OR = _.auto()
@@ -40,6 +42,7 @@ class Precedence(_.IntEnum):
     # operators except if explicitly specified
     UNARY = _.auto()
 
+
     # Call expressions of the form `expr(args)`: ()
     # This is an infix operator if you think about it.
     # I mean look at the opening paren, goes between
@@ -49,10 +52,12 @@ class Precedence(_.IntEnum):
     # Member access operator: .
     DOT = _.auto()
 
+    # Group expressions: ()
+    GROUP = _.auto()
+
     # number, string, variable, true, false, nil
     # We can say all litaral values are in this level
     PRIMARY = _.auto()
-
 
     # To make sure `Prec(prec + 1)` is always valid
     # NOTE: Do not use this to mark any precedence since if prec
